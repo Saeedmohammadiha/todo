@@ -1,31 +1,18 @@
-import { useState } from "react";
+import { useReducer, useState } from "react";
 import "./App.css";
+import { ADD, DELETE, EDIT, reducers } from "./reducers";
 
 function App() {
   const [inputValue, setInputValue] = useState("");
-  const [todos, setTodos] = useState([]);
   const [open, setOpen] = useState(false);
   const [todoForEdit, setTodoForEdit] = useState();
   const [nextId, setNextId] = useState(1);
+  const [state, dispatch] = useReducer(reducers, { todos: [] });
 
   const handleAddTodo = () => {
-    if (inputValue.trim() !== "") {
-      const newTodos = [...todos, { id: nextId, title: inputValue }];
-      setTodos(newTodos);
-      setInputValue("");
-      setNextId(nextId + 1);
-    }
-  };
-
-  const handleDelete = (id) => {
-    const newTodos = todos.filter((todo) => todo.id !== id);
-    setTodos(newTodos);
-  };
-
-  const handleEdit = (id) => {
-    const todo = todos.find((todo) => todo.id === id);
-    setTodoForEdit(todo);
-    setOpen(true);
+    dispatch({ type: ADD, payload: { inputValue, nextId } });
+    setInputValue("");
+    setNextId(nextId + 1);
   };
 
   const editModal = (
@@ -42,29 +29,11 @@ function App() {
         />
         <button
           onClick={() => {
-            setTodos((prevTodos) => {
-              const newtodos = [...prevTodos];
-              const todoIndex = newtodos.findIndex(
-                (todo) => todo.id === todoForEdit.id
-              );
-              newtodos[todoIndex] = {
-                id: todoForEdit.id,
-                title: todoForEdit.title,
-              };
-
-              return newtodos;
+            dispatch({
+              type: EDIT,
+              payload: { id: todoForEdit.id, title: todoForEdit.title },
             });
 
-            // setTodos((prevTodos) => {
-            //   const newtodos = [...prevTodos];
-            //   const finalTodos = newtodos.map((todo) => {
-            //     if (todo.id === todoForEdit.id) {
-            //       return { id: todoForEdit.id, title: todoForEdit.title };
-            //     }
-            //     return todo;
-            //   });
-            //   return finalTodos;
-            // });
             setOpen(false);
           }}
         >
@@ -100,21 +69,24 @@ function App() {
           </button>
         </div>
         <ul className="todo-list">
-          {todos.map((todo) => {
+          {state?.todos.map((todo) => {
             return (
               <li key={todo.id}>
                 {todo.title}
                 <button
                   className="delete-button"
                   onClick={() => {
-                    handleDelete(todo.id);
+                    dispatch({ type: DELETE, payload: todo.id });
                   }}
                 >
                   <i className="fas fa-trash"></i>
                 </button>
                 <button
                   className="add-button"
-                  onClick={() => handleEdit(todo.id)}
+                  onClick={() => {
+                    setTodoForEdit({ id: todo.id, title: todo.title });
+                    setOpen(true);
+                  }}
                 >
                   <i className="fas fa-edit"></i>
                 </button>
