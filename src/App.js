@@ -1,55 +1,19 @@
-import { useReducer, useState } from "react";
+import { useReducer, useRef, useState } from "react";
 import "./App.css";
-import { ADD, DELETE, EDIT, reducers } from "./reducers";
+import { ADD, DELETE, reducers } from "./reducers";
+import EditModal from "./EditModal";
 
 function App() {
   const [inputValue, setInputValue] = useState("");
-  const [open, setOpen] = useState(false);
-  const [todoForEdit, setTodoForEdit] = useState();
-  const [nextId, setNextId] = useState(1);
+  const nextId = useRef(1);
+  const todoEditRef = useRef();
   const [state, dispatch] = useReducer(reducers, { todos: [] });
 
   const handleAddTodo = () => {
-    dispatch({ type: ADD, payload: { inputValue, nextId } });
+    dispatch({ type: ADD, payload: { inputValue, nextId: nextId.current } });
     setInputValue("");
-    setNextId(nextId + 1);
+    nextId.current = nextId.current + 1;
   };
-
-  const editModal = (
-    <div className={`modal `}>
-      <div className="modal-content">
-        <h2>Input Modal</h2>
-        <input
-          type="text"
-          value={todoForEdit?.title}
-          onChange={(e) =>
-            setTodoForEdit({ ...todoForEdit, title: e.target.value })
-          }
-          placeholder="Enter something"
-        />
-        <button
-          onClick={() => {
-            dispatch({
-              type: EDIT,
-              payload: { id: todoForEdit.id, title: todoForEdit.title },
-            });
-
-            setOpen(false);
-          }}
-        >
-          Submit
-        </button>
-        <button
-          onClick={() => {
-            setOpen(false);
-            setTodoForEdit(null);
-          }}
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <>
@@ -84,8 +48,11 @@ function App() {
                 <button
                   className="add-button"
                   onClick={() => {
-                    setTodoForEdit({ id: todo.id, title: todo.title });
-                    setOpen(true);
+                    todoEditRef.current.setTodoForEdit({
+                      id: todo.id,
+                      title: todo.title,
+                    });
+                    todoEditRef.current.setOpen(true);
                   }}
                 >
                   <i className="fas fa-edit"></i>
@@ -95,7 +62,8 @@ function App() {
           })}
         </ul>
       </div>
-      {open && editModal}
+
+      <EditModal dispatch={dispatch} ref={todoEditRef} />
     </>
   );
 }
